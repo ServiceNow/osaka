@@ -1,0 +1,11 @@
+!!python/object:argparse.Namespace
+bdg_optimizer: 0
+cl_strategy: always_retrain
+cl_tbd_thres: -1
+learn_step_size: false
+method: MAML
+model_name: fine_tuning
+no_cl_meta_learning: 1
+num_epochs: 1000
+num_steps: 1
+per_param_step_size: false

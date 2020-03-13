@@ -1,0 +1,11 @@
+!!python/object:argparse.Namespace
+bgd_optimizer: 1
+cl_strategy: always_retrain
+cl_tbd_thres: -1
+learn_step_size: false
+method: MAML
+model_name: BGD
+no_cl_meta_learning: 1
+num_epochs: 0
+num_steps: 1
+per_param_step_size: false

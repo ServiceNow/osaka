@@ -1,3 +1,5 @@
+.idea
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -102,3 +104,26 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# Temporary
+tmp/
+
+#Output
+.output/
+
+#Logs
+logs/
+
+
+#Data
+data/*
+!data/**/*.py
+!data/**/*.yaml
+
+# Editor Folders:
+.vscode/
+.idea
+
+# Training/hparam search utils:
+launch.sh
+wandb
