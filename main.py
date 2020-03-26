@@ -38,7 +38,6 @@ def main(args):
                 print('no internet connection. Going in dry')
                 os.environ['WANDB_MODE'] = 'dryrun'
             import wandb
-            wandb.init(project="cl_harmonics_hparam_search")
 
             if args.wandb_key is not None:
                 wandb.login(key=args.wandb_key)
