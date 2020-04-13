@@ -5,10 +5,14 @@ import math
 import os
 import time
 import json
+import argparse
 import random
 import logging
 import numpy as np
 import copy
+import exp_configs
+import pprint
+
 from pdb import set_trace
 
 from torchvision import transforms
@@ -16,13 +20,30 @@ from torchvision.transforms import ToTensor, Resize, Compose
 from dataloaders import init_dataloaders
 
 from MAML.model import ModelConvSynbols, ModelConvOmniglot, ModelConvMiniImagenet, ModelMLPSinusoid
-from MAML.metalearners import ModelAgnosticMetaLearning, ModularMAML, DynamicModularMAML
+from MAML.metalearners import ModelAgnosticMetaLearning, ModularMAML
 from MAML.utils import ToTensor1D, set_seed, is_connected
 
 from Utils.bgd_lib.bgd_optimizer import create_BGD_optimizer
+from haven import haven_utils as hu
 
 
-def main(args):
+def main(exp_dict, savedir_base, reset):
+    # bookkeeping
+    # ---------------
+
+    # get experiment directory
+    exp_id = hu.hash_dict(exp_dict)
+    savedir = os.path.join(savedir_base, exp_id)
+
+    if reset:
+        # delete and backup experiment
+        hc.delete_experiment(savedir, backup_flag=True)
+    
+    # create folder and save the experiment dictionary
+    os.makedirs(savedir, exist_ok=True)
+    hu.save_json(os.path.join(savedir, "exp_dict.json"), exp_dict)
+    pprint.pprint(exp_dict)
+    print("Experiment saved in %s" % savedir)
 
     #------------------------ BOILERPLATE  --------------------------#
 
@@ -293,8 +314,35 @@ def main(args):
 
 
 if __name__ == "__main__":
-    from args import parse_args
-    args = parse_args()
-    main(args)
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('-e', '--exp_group_list', nargs="+")
+    parser.add_argument('-sb', '--savedir_base', required=True)
+    parser.add_argument("-r", "--reset",  default=0, type=int)
+    parser.add_argument("-ei", "--exp_id", default=None)
+
+    args = parser.parse_args()
+
+    # Collect experiments
+    # -------------------
+    if args.exp_id is not None:
+        # select one experiment
+        savedir = os.path.join(args.savedir_base, args.exp_id)
+        exp_dict = hu.load_json(os.path.join(savedir, "exp_dict.json"))
+        
+        exp_list = [exp_dict]
+        
+    else:
+        # select exp group
+        exp_list = []
+        for exp_group_name in args.exp_group_list:
+            exp_list += exp_configs.EXP_GROUPS[exp_group_name]
+
+    # run experiments
+    for exp_dict in exp_list:
+        # do trainval
+        main(exp_dict=exp_dict,
+                savedir_base=args.savedir_base,
+                reset=args.reset)
 
 
