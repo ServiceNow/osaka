@@ -379,7 +379,7 @@ def init_dataloaders(args):
 
 
         args.input_size = [1,28,28]
-        Omniglot_dataset = Omniglot('data/').data
+        Omniglot_dataset = Omniglot(args.folder).data
         Omniglot_dataset = torch.from_numpy(Omniglot_dataset).type(torch.float).to(args.device)
         meta_train_dataset = Omniglot_dataset[:args.n_train_cls]
         meta_train_train = meta_train_dataset[:,:args.n_train_samples,:,:]
@@ -391,8 +391,8 @@ def init_dataloaders(args):
         meta_val_test = meta_val_dataset[:,args.n_train_samples:,:,:]
 
         cl_dataset = Omniglot_dataset
-        cl_ood_dataset1 = MNIST('data/', train=True,  download=True)
-        cl_ood_dataset2 = FashionMNIST('data/', train=True,  download=True)
+        cl_ood_dataset1 = MNIST(args.folder, train=True,  download=True)
+        cl_ood_dataset2 = FashionMNIST(args.folder, train=True,  download=True)
         cl_ood_dataset1, _ = order_and_split(cl_ood_dataset1.data, cl_ood_dataset1.targets)
         cl_ood_dataset2, _ = order_and_split(cl_ood_dataset2.data, cl_ood_dataset2.targets)
         cl_ood_dataset1 = cl_ood_dataset1[:,:,None,:,:]
