@@ -73,7 +73,7 @@ def parse_args():
 
     # ModularMAML
     group = parser.add_argument_group("ModularMAML", "Settings related to the Modular MAML model.")
-    group.add_argument('-m', '--method', type=str, default='MAML', choices=['MAML','ModularMAML', 'DynamicModularMAML'])
+    group.add_argument('-m', '--method', type=str, default='MAML', choices=['MAML','ModularMAML'])
     group.add_argument('-mo', '--modularity', type=str, default='param_wise', choices=['param_wise'], help='dont mind this for now')
     group.add_argument('-ma','--mask_activation', type=str, default='None', choices=['None','sigmoid','ReLU', 'hardshrink'], help='activation before applying the masks')
     group.add_argument('-lr', '--l1_reg', type=float, default=0.0, help='regularization strenght to encourage sparsity')
@@ -97,7 +97,7 @@ def parse_args():
 
     # CL
     group = parser.add_argument_group("CL", "Settings specific to the continual learning setting.")
-    group.add_argument('--model_config', type=str, default="config/ours.yaml", help="Path to a yaml config file.")
+    group.add_argument('--model_config', type=str, default="Config/ours.yaml", help="Path to a yaml config file.")
     group.add_argument('--n_runs',     type=int, default=1,     help='number of runs for cl experiment')
     group.add_argument('--timesteps',  type=int, default=10000, help='number of timesteps for the CL exp')
     group.add_argument('--prob_statio',                    type=float, default=0.98, help='probability to stay in the same task')
@@ -124,9 +124,9 @@ def parse_args():
     if args.num_shots_test <= 0:
         args.num_shots_test = args.num_shots
 
-    if args.model_name != "ours" and args.model_config == "config/ours.yaml":
+    if args.model_name != "ours" and args.model_config == "Config/ours.yaml":
         # use the custom config file if a different model_name was passed.
-        args.model_config = f"config/{args.model_name}.yaml"
+        args.model_config = f"Config/{args.model_name}.yaml"
 
     # Load a set of pre-configured arguments.
     if args.model_config:
