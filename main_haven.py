@@ -29,7 +29,29 @@ from haven import haven_chk as hc
 from args import parse_args, postprocess_args
 
 
-def main(args):
+def main(exp_dict, savedir_base, reset):
+
+
+    # HAVEN bookkeeping
+    # ---------------
+    class Args():
+        def __init__(self, kwargs):
+            self.__dict__ = kwargs
+    args = Args(exp_dict)
+
+    # get experiment directory
+    exp_id = hu.hash_dict(exp_dict)
+    savedir = os.path.join(savedir_base, exp_id)
+
+    if reset:
+        # delete and backup experiment
+        hc.delete_experiment(savedir, backup_flag=True)
+
+    # create folder and save the experiment dictionary
+    os.makedirs(savedir, exist_ok=True)
+    hu.save_json(os.path.join(savedir, "exp_dict.json"), exp_dict)
+    pprint.pprint(exp_dict)
+    print("Experiment saved in %s" % savedir)
 
     #------------------------ BOILERPLATE  --------------------------#
 
@@ -89,7 +111,6 @@ def main(args):
                     model = ModelConvSynbols(args.num_ways, hidden_size=args.hidden_size, deeper=args.deeper)
                     loss_function = F.cross_entropy
                 if args.dataset == "harmonics":
-                    #NOTE: doesn't work yet
                     model = ModelMLPSinusoid(hidden_sizes=[40, 40])
                     loss_function = F.mse_loss
             else:
@@ -337,6 +358,63 @@ def main(args):
 
 
 if __name__ == "__main__":
-    from args import parse_args
-    args = parse_args()
-    main(args)
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('-e', '--exp_group_list', nargs="+")
+    parser.add_argument('-sb', '--savedir_base', required=True)
+    parser.add_argument("-r", "--reset",  default=0, type=int)
+    parser.add_argument("-ei", "--exp_id", default=None)
+    parser.add_argument("-j", "--run_jobs", default=0, type=int)
+    parser.add_argument("-nw", "--n_workers", type=int, default=1)
+
+    args = parser.parse_args()
+
+    # Collect experiments
+    # -------------------
+    if args.exp_id is not None:
+        # select one experiment
+        savedir = os.path.join(args.savedir_base, args.exp_id)
+        exp_dict = hu.load_json(os.path.join(savedir, "exp_dict.json"))
+
+        exp_list = [exp_dict]
+
+    else:
+        # select exp group
+        exp_list = []
+        for exp_group_name in args.exp_group_list:
+            exp_list += EXP_GROUPS[exp_group_name]
+        default_args = vars(parse_args())
+        for i in range(len(exp_list)):
+            _default_args = default_args.copy()
+            _default_args.update(exp_list[i])
+            _default_args = vars(postprocess_args(_default_args))
+            exp_list[i] = _default_args
+
+    # run experiments
+    if not args.run_jobs:
+        for exp_dict in exp_list:
+            # do trainval
+            main(exp_dict=exp_dict,
+                    savedir_base=args.savedir_base,
+                    reset=args.reset)
+
+    # launch jobs
+    elif args.run_jobs:
+            # launch jobs
+            from haven import haven_jobs as hjb
+            run_command = ('python main_haven.py -ei <exp_id> -sb %s -nw %d' %  (args.savedir_base,
+                                                                               args.n_workers))
+            job_config = {'volume': "/mnt:/mnt",
+                        'image': "images.borgy.elementai.net/pau/pytorch:1.3.1py3-cuda10-cudnn7",
+                        'bid': '0',
+                        'restartable': '1',
+                        'gpu': '1',
+                        'mem': '16',
+                        'cpu': '6'}
+            workdir = os.path.dirname(os.path.realpath(__file__))
+
+            hjb.run_exp_list_jobs(exp_list,
+                                savedir_base=args.savedir_base,
+                                workdir=workdir,
+                                run_command=run_command,
+                                job_config=job_config)

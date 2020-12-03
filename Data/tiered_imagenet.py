@@ -29,21 +29,27 @@ class NonEpisodicTieredImagenet(Dataset):
         """
         split = self.split_paths[split]
         self.ROOT_PATH = path
-        if not os.path.exists(self.ROOT_PATH+'/{}-tiered-imagenet.npy'.format(split)): #'/tmp/{}-tiered-imagenet.pkl'.format(split)):
-            #TODO(next line is missing something)
-            if not os.path.exists(self.ROOT_PATH+'/{}-tiered-imagenet.npy') :
-                raise Exception("Please download tiered-imagenet as indicated"
-                        "in https://github.com/renmengye/few-shot-ssl-public")
-            img_path = os.path.join(self.ROOT_PATH, "%s_images_png.pkl" % (split))
-            label_path = os.path.join(self.ROOT_PATH, "%s_labels.pkl" % (split))
+
+        if not os.path.exists(self.ROOT_PATH+'/{}-tiered-imagenet.npy'.format(split)): #'/tmp/{}-tiered-imagenet.npy'.format(split)):
+            #FIXME: change me back
+            # if not os.path.exists(self.ROOT_PATH):
+            #     print(
+            #         "Please download tiered-imagenet as indicated in https://github.com/renmengye/few-shot-ssl-public")
+            #     raise IOError
+            
+            _ROOT_PATH = '/mnt/datasets/public/research/tiered-imagenet' 
+            # img_path = os.path.join(self.ROOT_PATH, "%s_images_png.pkl" % (split))
+            # label_path = os.path.join(self.ROOT_PATH, "%s_labels.pkl" % (split))
+            img_path = os.path.join(_ROOT_PATH, "%s_images_png.pkl" % (split))
+            label_path = os.path.join(_ROOT_PATH, "%s_labels.pkl" % (split))
             self.transforms = transforms
             with open(img_path, 'rb') as infile:
                 images = pkl.load(infile, encoding="bytes")
 
             with open(label_path, 'rb') as infile:
                 self.labels = pkl.load(infile, encoding="bytes")
-                self.labels_specific = self.labels["label_specific"]
-                self.labels_general = self.labels["label_general"]
+                self.labels_specific = self.labels[b"label_specific"]
+                self.labels_general = self.labels[b"label_general"]
 
             print("Loading tiered-imagenet...")
             label_count = {i: (self.labels_specific == i).astype(int).sum() for i in set(self.labels_specific)}
@@ -62,12 +68,8 @@ class NonEpisodicTieredImagenet(Dataset):
             del (images)
 
         else:
-            #with open(self.ROOT_PATH+'/{}-tiered-imagenet.pkl'.format(split), 'rb') as infile: #'/tmp/{}-tiered-imagenet.pkl'.format(split), 'rb') as infile:
-            #    self.data = pkl.load(infile)
             self.data = torch.from_numpy(np.load(os.path.join(self.ROOT_PATH, '{}-tiered-imagenet.npy'.format(split)),
                                 allow_pickle=True))
-            #self.data = np.load(os.path.join(self.ROOT_PATH, '/{}-tiered-imagenet.pkl'.format(split)),
-            #                    allow_pickle=True)
             print(self.data.size())
         print("Done")
 

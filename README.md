@@ -1,17 +1,19 @@
 # Online Fast Adaptation and Knowledge Accumulation:
 # a New Approach to Continual Learning 
 
-official code for the paper: https://arxiv.org/abs/2003.05856 
-
 
 ## (key) Requirements 
 - Python 3.6
 - Pytorch 1.2 or higher
+- Havenai 0.6 or higher (to reproduce the official results)
+
 
 `pip install -r requirements.txt`
 
 ## Structure
 
+    ├── Config
+        ├── model's configuration 
     ├── Data
         ├── omniglot.py           # fetches the dataset      
         ├── tiered_imagenet.py    # fetches the dataset
@@ -23,19 +25,24 @@ official code for the paper: https://arxiv.org/abs/2003.05856
     ├── Utils
         ├── bgd_lib
             ├── ...         # files for BGD      
-    ├── main.py             # main file
+    ├── main_haven.py       # main file to reproduce results
+    ├── main.py             # main file (currently as a bug an arguments are not passed via command line)    
     ├── dataloaders.py      # defines the experiment setting, constructs the dataloaders    
     ├── args.py             # arguments
     ├── template.py         # main file template (if you dont want to use pytorch)
    
+## Data download
 
+Omniglot: automatic
+
+Tiered-imagenet: see `Data/tiered-imagenet.py`
 
 ## Running Experiments
 
 
-example (in verbose mode):  </br>
+example: run C-MAML (in verbose mode):  </br>
 
-`python main.py -v`
+`python main.py --model_name ours -v`
 
 some notable args:  </br>
 
@@ -49,24 +56,33 @@ to try different baselines in ['online_sgd', 'fine_tuning', 'MetaCOG', 'MetaBGD'
 
 
 
+## Reproducing the Evaluation results
+
+for Omniglot (Table 5) and Tiered-ImageNet (Table 3), run:
+
+`mkdir Logs`
+
+`python main_haven.py -e final_results -sb Logs `
+
+
+Our version of synbols will be made public soon.
+
+
+
 ## Logging
 
 Logging is done with [Weights & Biases](https://www.wandb.com/) and can be turned on like this: </br>
 `python main.py --wandb <workspace_name>`
 
+
 ## TODO
 
-- [ ] code to reproduce experiments
+- [ ] update naming conventions related to C-MAML, UM, PAP and rm ModularMAML
+- [ ] merge and cleanup the 2 observe() functions
+- [ ] wrap-up the reporting (in main) into utils
+
 
 ## Acknowledgements
 
 MAML code comes from https://github.com/tristandeleu/pytorch-maml
-
-## Contact
-
-massimo.p.caccia at gmail.com
-
-
-
-
 

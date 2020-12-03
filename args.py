@@ -63,17 +63,19 @@ def parse_args():
     # Model
     group = parser.add_argument_group("Model Settings")
     group.add_argument('--model_name', type=str, default='ours', choices=['ours', 'online_sgd', 'fine_tuning', 'MetaCOG', 'MetaBGD', 'MAML', 'ANIL', 'BGD'])
+    group.add_argument('--model_name_impv', type=str, default=None, help='for monitoring')
     group.add_argument('-hs', '--hidden_size', type=int, default=64, help='Number of channels in each convolution layer of the VGG network or hidden size of an MLP. If None, kept to default')
     group.add_argument('-de', '--deeper', type=int, default=0, help='number of layers after the convs and before the classifier')
-    group.add_argument('-nclml', '--no_cl_meta_learning',  type=int,   default=0,    help='turn off meta-learning at cl time')
-    group.add_argument('--freeze_visual_features',         type=int,   default=0,    help='for MRCL, freeze all conv layers at cl time')
-    group.add_argument('-cl_s',  '--cl_strategy',          type=str,   default=None, choices=['always_retrain', 'never_retrain', 'acc', 'loss'])
-    group.add_argument('-cl_st', '--cl_strategy_thres',    type=float, default=0,    help='threshold for training on the incoming data or not')
-    group.add_argument('-cl_tt', '--cl_tbd_thres',         type=float, default=-1,   help='threshold for task boundary detection (-1 to turn on off)')
+    group.add_argument('-nclml', '--no_cl_meta_learning',  type=int,   default=0,     help='turn off meta-learning at cl time')
+    group.add_argument('--freeze_visual_features',         type=int,   default=0,     help='for MRCL, freeze all conv layers at cl time')
+    group.add_argument('-cl_s',  '--cl_strategy',          type=str,   default=None,  choices=['always_retrain', 'never_retrain', 'acc', 'loss'])
+    group.add_argument('-cl_a',  '--cl_accumulate',        type=bool,  default=False, help="enables more few shots, with TBD")
+    group.add_argument('-cl_st', '--cl_strategy_thres',    type=float, default=0,     help='threshold for training on the incoming data or not')
+    group.add_argument('-cl_tt', '--cl_tbd_thres',         type=float, default=-1,    help='threshold for task boundary detection (-1 to turn on off)')
 
-    # ModularMAML
+    # ModularMAML (for MetaCOG)
     group = parser.add_argument_group("ModularMAML", "Settings related to the Modular MAML model.")
-    group.add_argument('-m', '--method', type=str, default='MAML', choices=['MAML','ModularMAML'])
+    group.add_argument('-m', '--method', type=str, default='MAML', choices=['MAML','ModularMAML',])
     group.add_argument('-mo', '--modularity', type=str, default='param_wise', choices=['param_wise'], help='dont mind this for now')
     group.add_argument('-ma','--mask_activation', type=str, default='None', choices=['None','sigmoid','ReLU', 'hardshrink'], help='activation before applying the masks')
     group.add_argument('-lr', '--l1_reg', type=float, default=0.0, help='regularization strenght to encourage sparsity')
@@ -100,7 +102,7 @@ def parse_args():
     group.add_argument('--model_config', type=str, default="Config/ours.yaml", help="Path to a yaml config file.")
     group.add_argument('--n_runs',     type=int, default=1,     help='number of runs for cl experiment')
     group.add_argument('--timesteps',  type=int, default=10000, help='number of timesteps for the CL exp')
-    group.add_argument('--prob_statio',                    type=float, default=0.98, help='probability to stay in the same task')
+    group.add_argument('--prob_statio', type=float, default=0.98, help='probability to stay in the same task')
     group.add_argument("--task_sequence",    type=str, choices=["train", "test", "ood"], default=None, nargs="*", help="predefined task sequence for the dataloader to serve in a loop.")
     group.add_argument("--n_steps_per_task", type=int, default=1, help="Number of steps per task in the sequence.")
 
@@ -119,8 +121,15 @@ def parse_args():
     group.add_argument('--note', type=str, default=None, help='to ease hparam search analysis')
 
 
-    args = parser.parse_args()
+    return parser.parse_args([])
 
+def postprocess_args(args):
+    class AttrDict(dict):
+        def __init__(self, *args, **kwargs):
+            super(AttrDict, self).__init__(*args, **kwargs)
+            self.__dict__ = self
+
+    args = AttrDict(**args)
     if args.num_shots_test <= 0:
         args.num_shots_test = args.num_shots
 

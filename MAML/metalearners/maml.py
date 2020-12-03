@@ -13,7 +13,7 @@ from Utils.bgd_lib.bgd_optimizer import BGD
 from collections import OrderedDict
 from MAML.utils import update_parameters, tensors_to_device, compute_accuracy
 
-__all__ = ['ModelAgnosticMetaLearning', 'MAML', 'FOMAML', 'ModularMAML', 'DynamicModularMAML']
+__all__ = ['ModelAgnosticMetaLearning', 'MAML', 'FOMAML', 'ModularMAML',]
 
 
 class ModelAgnosticMetaLearning(object):
@@ -82,11 +82,16 @@ class ModelAgnosticMetaLearning(object):
         self.scheduler = None
         self.loss_function = loss_function
         self.is_classification_task = args.is_classification_task
+        self.batch_size = args.batch_size
 
         self.current_model = None
         self.cl_strategy = None
         self.freeze_visual_features = args.freeze_visual_features
         self.no_meta_learning = False
+        self.best_pretrain_val = None
+        self.last_tbd = 0
+        self.cl_buffer = []
+        # self.cl_buffer['inputs'], self.cl_buffer['targets'] = [], []
 
         if args.per_param_step_size:
             self.step_size = OrderedDict((name, torch.tensor(args.step_size,
@@ -154,6 +159,34 @@ class ModelAgnosticMetaLearning(object):
 
     def adapt(self, inputs, targets):
         params = None
+
+        results = {'inner_losses': np.zeros(
+            (self.num_adaptation_steps,), dtype=np.float32)}
+
+        for step in range(self.num_adaptation_steps):
+            logits = self.model(inputs, params=params)
+            inner_loss = self.loss_function(logits, targets)
+            results['inner_losses'][step] = inner_loss.item()
+
+            if (step == 0):
+                if self.is_classification_task:
+                    accuracy_before = compute_accuracy(logits, targets)
+                    results["accuracy_before"] = accuracy_before
+                else:
+                    mse_before = inner_loss
+                    results["mse_before"] = mse_before
+
+            self.model.zero_grad()
+
+            params = update_parameters(self.model, inner_loss,
+                step_size=self.step_size, params=params,
+                first_order=(not self.model.training) or self.first_order,
+                freeze_visual_features=self.freeze_visual_features,
+                no_meta_learning=self.no_meta_learning)
+
+        return params, results
+    
+    def adapt_accumulate(self, params, inputs, targets):
 
         results = {'inner_losses': np.zeros(
             (self.num_adaptation_steps,), dtype=np.float32)}
@@ -377,7 +410,7 @@ class ModelAgnosticMetaLearning(object):
         #----------------- CL strategies ------------------#
 
         tbd = 0
-        if self.cl_tbd_thres != -1:
+        if self.cl_tbd_thres >= 0 and self.cl_tbd_thres < 100 :
 
             with torch.no_grad():
                 logits = self.model(inputs, params=self.current_model)
@@ -388,7 +421,9 @@ class ModelAgnosticMetaLearning(object):
             if self.cl_strategy=='acc':
                 if current_acc >= results['accuracy_after'] + self.cl_tbd_thres:
                     tbd = 1
-            elif self.cl_strategy=='loss':
+            elif 'loss' in str(self.cl_strategy):
+                # if task_switch:
+                #     temp
                 if current_outer_loss + self.cl_tbd_thres <= results['outer_loss']:
                     tbd = 1
 
@@ -404,16 +439,21 @@ class ModelAgnosticMetaLearning(object):
                     ood = 0
 
         if self.cl_strategy != 'never_retrain' and not tbd and ood:
-            self.outer_update(outer_loss)
+            if self.cl_strategy != 'loss_smooth':
+                self.outer_update(outer_loss)
+            else:
+                smoothing_weight = (1-torch.exp(-self.cl_strategy_thres*outer_loss.detach()))
+                self.outer_update(smoothing_weight * outer_loss)
+                # print(smoothing_weight)
 
 
         #--------------------------------------------------#
 
-        results['tbd'] = task_switch.item()==tbd
+        results['tbd'] = tbd
 
         #print('{} {} loss={:.2f} curr_loss={:.2f} acc={:.2f} curr_acc={:.2f} tbd: {}'.format(
         #                                   task_switch.item(),
-        #                                   mode[0],
+        #                                   mode,
         #                                   results['outer_loss'],
         #                                   current_outer_loss,
         #                                   results['accuracy_after'],
@@ -422,6 +462,174 @@ class ModelAgnosticMetaLearning(object):
 
         return results
 
+    def observe_accumulate(self, batch):
+        if self.cl_strategy == 'never_retrain':
+            self.model.eval()
+        else:
+            self.model.train()
+
+        #inputs, targets, _ , _ = batch
+        inputs, targets, task_switch , mode = batch
+
+        # for now we are doing one task at a time
+        assert inputs.shape[0] == 1
+        assert self.optimizer_cl != None, 'Set optimizer_cl'
+        # mc sampling for bgd optimizer
+        self.batch_size = inputs.shape[1]
+        num_of_mc_iters = 1
+        #set_trace()
+        if hasattr(self.optimizer_cl, "get_mc_iters"):
+            num_of_mc_iters = self.optimizer_cl.get_mc_iters()
+        inputs, targets  = inputs[0], targets[0]
+
+        results = {
+            'inner_losses': np.zeros((self.num_adaptation_steps,), dtype=np.float32),
+            'outer_loss': 0.,
+            'tbd':0.,
+        }
+        if self.is_classification_task:
+            results.update({
+                'accuracy_before': 0.,
+                'accuracy_after': 0.
+            })
+        else:
+            results.update({
+                "mse_before": 0.,
+                "mse_after": 0.,
+            })
+        if self.current_model is None:
+            self.current_model, _ = self.adapt(inputs, targets)
+            self.last_mode = mode[0]
+            self.cl_buffer.append(batch)
+            return results
+
+        ## try the prev model on the incoming data:
+        with torch.set_grad_enabled(self.model.training):
+            if isinstance(self.optimizer_cl, BGD):
+                ## using BGD:
+                acc, mse, outer_loss  = self.get_outer_loss_bgd(inputs, targets, num_of_mc_iters)
+                if self.is_classification_task:
+                    results['accuracy_after'] = acc / num_of_mc_iters
+                else:
+                    results["mse_after"]  = mse / num_of_mc_iters
+                results['outer_loss'] = torch.mean(torch.tensor(outer_loss)).item()
+            else:
+                ## using SGD
+                logits = self.model(inputs, params=self.current_model)
+                outer_loss = self.loss_function(logits, targets)
+                results['outer_loss'] = outer_loss.item()
+                if self.is_classification_task:
+                    results['accuracy_after'] = compute_accuracy(logits, targets)
+                else:
+                    results["mse_after"] = F.mse_loss(logits, targets)
+
+        ## prediction is done and you can now use the labels
+
+        self.model.eval()
+        if self.last_tbd:
+            # print('reinit the model') 
+            self.current_model, _ = self.adapt(inputs, targets)
+        else:   
+            self.current_model, _ = self.adapt_accumulate(self.current_model, inputs, targets)
+
+
+        #----------------- CL strategies ------------------#
+
+        tbd = 0
+        if self.cl_tbd_thres > 0 and self.cl_tbd_thres < 100 :
+
+            with torch.no_grad():
+                logits = self.model(inputs, params=self.current_model)
+                current_outer_loss = self.loss_function(logits, targets).item()
+            current_acc = compute_accuracy(logits, targets)
+
+            ## if task switched, than inner and outer loop have a missmatch!
+            if self.cl_strategy=='acc':
+                if current_acc >= results['accuracy_after'] + self.cl_tbd_thres:
+                    tbd = 1
+            elif 'loss' in str(self.cl_strategy):
+                # if task_switch:
+                #     temp
+                if current_outer_loss + self.cl_tbd_thres <= results['outer_loss']:
+                    tbd = 1
+
+        ood = 1
+        if self.cl_strategy in ['loss', 'acc']:
+
+            if self.cl_strategy=='acc':
+                if results['accuracy_after'] >= self.cl_strategy_thres:
+                    ood = 0
+
+            elif self.cl_strategy=='loss':
+                if results['outer_loss'] <= self.cl_strategy_thres:
+                    ood = 0
+
+        if (tbd and len(self.cl_buffer)>0) or (len(self.cl_buffer)>2*self.batch_size):
+            
+            batch = self.make_batch()
+
+            self.model.train()
+            outer_loss, _ = self.get_outer_loss(batch)
+            if self.cl_strategy != 'loss_smooth':
+                self.outer_update(outer_loss)
+            else:
+                smoothing_weight = (1-torch.exp(-self.cl_strategy_thres*outer_loss.detach()))
+                self.outer_update(smoothing_weight * outer_loss)
+                # print(smoothing_weight)
+            self.model.eval()
+
+            ## restart buffer
+            self.cl_buffer = []
+            # print('updating model and restarting buffer')
+        else:
+            self.cl_buffer.append(batch)
+
+
+
+        #--------------------------------------------------#
+        
+        self.last_tbd = tbd
+        
+        results['tbd'] = tbd
+
+        # print('{} {} loss={:.2f} curr_loss={:.2f} acc={:.2f} curr_acc={:.2f} tbd: {}'.format(
+        #                                   task_switch.item(),
+        #                                   mode,
+        #                                   results['outer_loss'],
+        #                                   current_outer_loss,
+        #                                   results['accuracy_after'],
+        #                                   current_acc,
+        #                                   results['tbd']))
+
+        return results
+
+    def make_batch(self):
+        if len(self.cl_buffer)==1:
+            ## oups
+            self.cl_buffer.append(self.cl_buffer[0])
+        idx = int(np.ceil(len(self.cl_buffer)/2))
+        batch = {}
+        train_x = []
+        train_y = []
+        for i in range(idx):
+            if i==0:
+                train_x = self.cl_buffer[i][0]
+                train_y = self.cl_buffer[i][1]
+            else:
+                train_x = torch.cat([train_x, self.cl_buffer[i][0]])
+                train_y = torch.cat([train_y, self.cl_buffer[i][1]])
+        batch['train'] = [train_x, train_y]
+        test_x = []
+        test_y = []
+        for i in range(idx, len(self.cl_buffer)):
+            if i==idx:
+                test_x = self.cl_buffer[i][0]
+                test_y = self.cl_buffer[i][1]
+            else:
+                test_x = torch.cat([test_x, self.cl_buffer[i][0]])
+                test_y = torch.cat([test_y, self.cl_buffer[i][1]])
+        batch['test'] = [test_x, test_y]
+        return batch
 
 class FOMAML(ModelAgnosticMetaLearning):
     def __init__(self, model, optimizer=None, step_size=0.1,

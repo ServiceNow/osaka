@@ -1,0 +1,7 @@
+!!python/object:argparse.Namespace
+bdg_optimizer: 0
+cl_strategy: never_retrain
+cl_tbd_thres: -1
+method: MAML
+model_name: MAML
+num_epochs: 1000

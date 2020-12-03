@@ -2,7 +2,7 @@ import sys
 import torch
 import numpy as np
 from pdb import set_trace
-
+import os
 
 # --------------------------------------------------------------------------
 # utils
@@ -206,8 +206,8 @@ class StreamDataset(torch.utils.data.Dataset):
     """ stream of non stationary dataset as described by Mass """
 
     def __init__(self, train_data, test_data, ood_data, n_shots=1,
-            n_way=5, prob_statio=.8, prob_train=0.1, prob_test=0.8,
-            prob_ood=0.1, args=None, **kwargs):
+            n_way=5, prob_statio=.8, prob_pretrain=0.1, prob_ood1=0.8,
+            prob_ood2=0.1, args=None, **kwargs):
 
         '''
         Parameters
@@ -222,7 +222,7 @@ class StreamDataset(torch.utils.data.Dataset):
 
         '''
 
-        assert prob_train + prob_test + prob_ood == 1.
+        assert prob_pretrain + prob_ood1 + prob_ood2 == 1.
         if args.dataset == 'tiered-imagenet':
             self.cpu_dset = True
         else:
@@ -231,9 +231,9 @@ class StreamDataset(torch.utils.data.Dataset):
         self.n_shots    = n_shots
         self.n_way      = n_way
 
-        self.modes    = ['train', 'test', 'ood']
+        self.modes    = ['pretrain', 'ood1', 'ood2']
         self.modes_id = [0, 1, 2]
-        self.probs    = np.array([prob_train, prob_test, prob_ood])
+        self.probs    = np.array([prob_pretrain, prob_ood1, prob_ood2])
         self.data     = [train_data, test_data, ood_data]
         self.p_statio = prob_statio
 
@@ -255,8 +255,8 @@ class StreamDataset(torch.utils.data.Dataset):
 
         self.mode_name_map = dict(zip(self.modes, self.modes_id))
 
-        # mode in which to start ( 0 --> 'train' )
-        self._mode = 0
+        # starting mode:
+        self._mode = np.random.choice([0,1,2], p=self.probs)
         self._classes_in_task = None
         self._samples_in_class = None
 
@@ -372,7 +372,7 @@ def init_dataloaders(args):
         from torchvision.datasets import MNIST, FashionMNIST
 
         args.is_classification_task = True
-        args.prob_train, args.prob_test, args.prob_ood = 0.5, 0.25, 0.25
+        args.prob_pretrain, args.prob_ood1, args.prob_ood2 = 0.5, 0.25, 0.25
         args.n_train_cls = 900
         args.n_val_cls = 100
         args.n_train_samples = 10
@@ -404,7 +404,7 @@ def init_dataloaders(args):
     elif args.dataset == "tiered-imagenet":
         from Data.tiered_imagenet import NonEpisodicTieredImagenet
 
-        args.prob_train, args.prob_test, args.prob_ood = 0.3, 0.3, 0.4
+        args.prob_pretrain, args.prob_ood1, args.prob_ood2 = 0.25, 0.25, 0.5
 
         args.is_classification_task = True
         args.n_train_cls = 100
@@ -423,7 +423,6 @@ def init_dataloaders(args):
         meta_val_test = meta_val_dataset[:,args.n_train_samples:,:,:]
 
         cl_dataset = tiered_dataset.data
-        set_trace()
 
         cl_ood_dataset1 = tiered_dataset.data[(args.n_train_cls+args.n_val_cls):]
         ## last results computed with this split
@@ -433,6 +432,26 @@ def init_dataloaders(args):
         cl_ood_dataset1 = cl_ood_dataset1.type(torch.float)#.to(args.device)
         cl_ood_dataset2 = cl_ood_dataset2.type(torch.float)#.to(args.device)
 
+    elif args.dataset == "synbols":
+        
+        args.is_classification_task = True
+        args.input_size = [3,32,32]
+        path = os.path.join(args.folder, 'cl-synbols_trn-sz1000_32x32')
+        train = torch.from_numpy(np.load(os.path.join(path, 'trn.npy'))).permute(0,1,4,2,3).float().to(args.device)
+        new_alphabet = torch.from_numpy(np.load(os.path.join(path, 'new_alphabet.npy'))).permute(0,1,4,2,3).float().to(args.device)
+        font = torch.from_numpy(np.load(os.path.join(path, 'font_task.npy'))).permute(0,1,4,2,3).float().to(args.device)
+        meta_train_dataset = train
+        meta_train_train = meta_train_dataset[:, :args.num_shots, ...]
+        meta_train_test = meta_train_dataset[:, args.num_shots:, ... ]
+        #TODO(figure out this bug)
+        meta_val_dataset = new_alphabet
+        meta_val_train = meta_val_dataset[:,:(args.num_shots+1), ...]
+        meta_val_test = meta_val_dataset[:,(args.num_shots+1):, ...]
+        # if args.mode=='train':
+        cl_dataset = train
+        cl_ood_dataset1 = new_alphabet
+        cl_ood_dataset2 = font
+        args.prob_pretrain, args.prob_ood1, args.prob_ood2 = 0.5, 0.25, 0.25
 
     elif args.dataset == "harmonics":
         '''under construction'''
@@ -461,7 +480,7 @@ def init_dataloaders(args):
             cl_ood_dataset3 = make_dataset(train=False)
 
 
-        args.prob_train, args.prob_test, args.prob_ood = 0.6, 0., 0.4
+        args.prob_pretrain, args.prob_ood1, args.prob_ood2 = 0.6, 0., 0.4
 
     else:
         raise NotImplementedError('Unknown dataset `{0}`.'.format(args.dataset))
@@ -478,7 +497,7 @@ def init_dataloaders(args):
 
     cl_dataloader = StreamDataset(cl_dataset, cl_ood_dataset1, cl_ood_dataset2,
             n_shots=args.num_shots, n_way=args.num_ways, prob_statio=args.prob_statio,
-            prob_train=args.prob_train, prob_test=args.prob_test, prob_ood=args.prob_ood, args=args)
+            prob_pretrain=args.prob_pretrain, prob_ood1=args.prob_ood1, prob_ood2=args.prob_ood2, args=args)
     cl_dataloader = torch.utils.data.DataLoader(cl_dataloader, batch_size=1)
 
     del meta_train_dataset, meta_train_train, meta_train_test, meta_val_dataset,\

@@ -1,5 +1,4 @@
 !!python/object:argparse.Namespace
 bdg_optimizer: 0
-freeze_visual_features: 0
 method: MAML
 model_name: ours
