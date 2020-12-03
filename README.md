@@ -3,6 +3,9 @@
 
 official code for the paper: https://arxiv.org/abs/2003.05856 
 
+NOTE: you can find the version of the repo that can reproduce the paper in the `camera_ready` branch.
+The master branch is lagging behind a bit. I'll fast-forward it + clean it up in a bit.
+
 
 ## (key) Requirements 
 - Python 3.6
