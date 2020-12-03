@@ -15,6 +15,9 @@ The master branch is lagging behind a bit. I'll fast-forward it + clean it up in
 
 ## Structure
 
+
+    ├── Config
+        ├── ...                   # model configuration
     ├── Data
         ├── omniglot.py           # fetches the dataset      
         ├── tiered_imagenet.py    # fetches the dataset
