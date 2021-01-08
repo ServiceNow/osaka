@@ -344,6 +344,9 @@ class ModelAgnosticMetaLearning(object):
             self.optimizer.step()
 
     def observe(self, batch):
+        #Note: this is the C-MAML algo w/o the prolonged adaptation phase:
+        #see the full C-MAML algo in the next func observe_accumulate()
+        
         if self.cl_strategy == 'never_retrain':
             self.model.eval()
         else:
@@ -408,6 +411,7 @@ class ModelAgnosticMetaLearning(object):
         self.current_model, _ = self.adapt(inputs, targets)
 
         #----------------- CL strategies ------------------#
+
 
         tbd = 0
         if self.cl_tbd_thres >= 0 and self.cl_tbd_thres < 100 :
@@ -548,8 +552,6 @@ class ModelAgnosticMetaLearning(object):
                 if current_acc >= results['accuracy_after'] + self.cl_tbd_thres:
                     tbd = 1
             elif 'loss' in str(self.cl_strategy):
-                # if task_switch:
-                #     temp
                 if current_outer_loss + self.cl_tbd_thres <= results['outer_loss']:
                     tbd = 1
 
