@@ -568,6 +568,9 @@ class ModelAgnosticMetaLearning(object):
 
         if (tbd and len(self.cl_buffer)>0) or (len(self.cl_buffer)>2*self.batch_size):
             
+            #Note: we enter here when a task boundary as been detected and that it's time to update \phi
+            # or if the the buffer is close to full. Then we also update \phi and restart the buffer
+            
             batch = self.make_batch()
 
             self.model.train()
