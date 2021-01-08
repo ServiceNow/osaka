@@ -375,6 +375,11 @@ class ModelAgnosticMetaLearning(object):
         self.current_model, _ = self.adapt(inputs, targets)
 
         #----------------- CL strategies ------------------#
+        
+        # Note: this is the C-MAML algo w/o the prolonged adaptation phase (PAP)
+        # and with the discrete version of the update modulation (UM)
+        # The full C-MAML algo is in the camera_ready branch at:
+        # https://github.com/ElementAI/osaka/blob/ed3fa5f9997ff12d9352f12bfad6847a201fd003/MAML/metalearners/maml.py#L465
 
         tbd = 0
         if self.cl_tbd_thres != -1:
