@@ -60,6 +60,19 @@ to try different baselines in ['online_sgd', 'fine_tuning', 'MetaCOG', 'MetaBGD'
 Logging is done with [Weights & Biases](https://www.wandb.com/) and can be turned on like this: </br>
 `python main.py --wandb <workspace_name>`
 
+## Reference
+
+```
+@article{caccia2020online,
+  title={Online Fast Adaptation and Knowledge Accumulation: a New Approach to Continual Learning},
+  author={Caccia, Massimo and Rodriguez, Pau and Ostapenko, Oleksiy and Normandin, Fabrice and Lin, Min and Caccia, Lucas and Laradji, Issam and Rish, Irina and Lacoste, Alexandre and Vazquez, David and Charlin, Laurent},
+  journal={NeurIPS},
+  year={2020},
+  url={https://arxiv.org/abs/2003.05856},
+  keywords={Continual-Meta Learning, Setting}
+}
+```
+
 ## TODO
 
 - [ ] code to reproduce experiments
