@@ -56,6 +56,10 @@ to try different baselines in ['online_sgd', 'fine_tuning', 'MetaCOG', 'MetaBGD'
 `python main.py --model_name <baseline_name>`
 
 
+## Reproduce the results
+
+See the [camera-ready](https://github.com/ElementAI/osaka/tree/camera_ready) branch
+
 
 ## Logging
 
