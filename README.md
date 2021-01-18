@@ -46,7 +46,7 @@ example (in verbose mode):  </br>
 some notable args:  </br>
 
 ```
-python main.py --prob_statio 0.98 --num_epochs 0 --cl_strategy always_retrain --meta_lr 0.1 --learn_step_size 1 --per_parameter_step_size 1 -v 
+python main.py --prob_statio 0.98 --num_epochs 0 --cl_strategy always_retrain --meta_lr 0.1 --learn_step_size 1 --per_param_step_size 1 -v 
 ```
 
 to try different baselines in ['online_sgd', 'fine_tuning', 'MetaCOG', 'MetaBGD', 'MAML','ANIL', 'BGD']  </br>
