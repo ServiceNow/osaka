@@ -4,7 +4,7 @@
 
 ## (key) Requirements 
 - Python 3.6
-- Pytorch 1.2 or higher
+- Pytorch 1.2 (there is a small bug with newer versions)
 - Havenai 0.6 or higher (to reproduce the official results)
 
 
