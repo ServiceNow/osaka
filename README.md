@@ -39,9 +39,11 @@ The master branch is lagging behind a bit. I'll fast-forward it + clean it up in
 ## Running Experiments
 
 
-example (in verbose mode):  </br>
+example: run C-MAML (in verbose mode):
 
-`python main.py -v`
+```
+python main.py --model_name ours -v
+```
 
 some notable args:  </br>
 
