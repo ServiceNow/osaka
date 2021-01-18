@@ -16,7 +16,7 @@ from torchvision.transforms import ToTensor, Resize, Compose
 from dataloaders import init_dataloaders
 
 from MAML.model import ModelConvSynbols, ModelConvOmniglot, ModelConvMiniImagenet, ModelMLPSinusoid
-from MAML.metalearners import ModelAgnosticMetaLearning, ModularMAML, DynamicModularMAML
+from MAML.metalearners import ModelAgnosticMetaLearning, ModularMAML
 from MAML.utils import ToTensor1D, set_seed, is_connected
 
 from Utils.bgd_lib.bgd_optimizer import create_BGD_optimizer

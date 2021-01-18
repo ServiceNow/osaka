@@ -13,7 +13,7 @@ from Utils.bgd_lib.bgd_optimizer import BGD
 from collections import OrderedDict
 from MAML.utils import update_parameters, tensors_to_device, compute_accuracy
 
-__all__ = ['ModelAgnosticMetaLearning', 'MAML', 'FOMAML', 'ModularMAML', 'DynamicModularMAML']
+__all__ = ['ModelAgnosticMetaLearning', 'MAML', 'FOMAML', 'ModularMAML']
 
 
 class ModelAgnosticMetaLearning(object):
@@ -375,7 +375,7 @@ class ModelAgnosticMetaLearning(object):
         self.current_model, _ = self.adapt(inputs, targets)
 
         #----------------- CL strategies ------------------#
-        
+
         # Note: this is the C-MAML algo w/o the prolonged adaptation phase (PAP)
         # and with the discrete version of the update modulation (UM)
         # The full C-MAML algo is in the camera_ready branch at:
