@@ -26,7 +26,7 @@
         ├── bgd_lib
             ├── ...         # files for BGD      
     ├── main_haven.py       # main file to reproduce results
-    ├── main.py             # main file (currently as a bug an arguments are not passed via command line)    
+    ├── main.py             # main file (currently as a bug an arguments is not passed via command line)    
     ├── dataloaders.py      # defines the experiment setting, constructs the dataloaders    
     ├── args.py             # arguments
     ├── template.py         # main file template (if you dont want to use pytorch)
@@ -56,7 +56,11 @@ to try different baselines in ['online_sgd', 'fine_tuning', 'MetaCOG', 'MetaBGD'
 
 
 
-## Reproducing the Evaluation results
+## Reproducing the Evaluation results using Haven-ai:
+
+first, install haven-ai if you don't have it:
+
+`pip install --upgrade git+https://github.com/haven-ai/haven-ai`
 
 for Omniglot (Table 5) and Tiered-ImageNet (Table 3), run:
 
