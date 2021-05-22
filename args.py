@@ -5,6 +5,7 @@ Defines the command-line arguments used in main.py.
 import argparse
 from typing import List, Optional, Union
 import yaml
+from pdb import set_trace
 
 
 def str2bool(value: Union[str, bool]) -> bool:
@@ -120,16 +121,9 @@ def parse_args():
     group.add_argument('-v', '--verbose', action='store_true')
     group.add_argument('--note', type=str, default=None, help='to ease hparam search analysis')
 
+    args = parser.parse_args()
 
-    return parser.parse_args([])
-
-def postprocess_args(args):
-    class AttrDict(dict):
-        def __init__(self, *args, **kwargs):
-            super(AttrDict, self).__init__(*args, **kwargs)
-            self.__dict__ = self
-
-    args = AttrDict(**args)
+    # args = AttrDict(**args)
     if args.num_shots_test <= 0:
         args.num_shots_test = args.num_shots
 
@@ -156,6 +150,7 @@ def postprocess_args(args):
         args.prob_statio = 0.9
         args.n_runs = 2
 
+    set_trace()
     return args
 
 if __name__ == "__main__":

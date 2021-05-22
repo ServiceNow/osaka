@@ -26,7 +26,7 @@ from MAML.utils import ToTensor1D, set_seed, is_connected
 from Utils.bgd_lib.bgd_optimizer import create_BGD_optimizer
 from haven import haven_utils as hu
 from haven import haven_chk as hc
-from args import parse_args, postprocess_args
+from args import parse_args
 
 
 def main(args):
@@ -48,6 +48,7 @@ def main(args):
         return args
 
     args = boilerplate(args)
+    set_trace()
 
     def wandb_wrapper(args, first_time=True):
 

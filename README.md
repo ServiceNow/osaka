@@ -26,7 +26,7 @@
         ├── bgd_lib
             ├── ...         # files for BGD      
     ├── main_haven.py       # main file to reproduce results
-    ├── main.py             # main file (currently as a bug an arguments is not passed via command line)    
+    ├── main.py             # main file    
     ├── dataloaders.py      # defines the experiment setting, constructs the dataloaders    
     ├── args.py             # arguments
     ├── template.py         # main file template (if you dont want to use pytorch)
