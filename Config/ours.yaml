@@ -2,3 +2,4 @@
 bdg_optimizer: 0
 method: MAML
 model_name: ours
+cl_strategy: loss

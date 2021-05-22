@@ -95,7 +95,7 @@ def parse_args():
     group.add_argument('-ss', '--step_size', type=float, default=0.1, help='Size of the fast adaptation step, ie. learning rate in the gradient descent update (default: 0.1).')
     group.add_argument('-lss', '--learn_step_size', type=bool, default=False, help='Weither or not to learn the (inner loop) step-size')
     group.add_argument('-ppss', '--per_param_step_size', type=bool, default=False, help='Weither ot not to learn param specific step-size')
-    group.add_argument('--first_order', type=int, default=0, help='Use the first order approximation, do not use higher-order derivatives during meta-optimization.')
+    group.add_argument('--first_order', type=bool, default=False, help='Use the first order approximation, do not use higher-order derivatives during meta-optimization.')
     group.add_argument('--meta_lr', type=float, default=0.001, help='Learning rate for the meta-optimizer (optimization of the outer loss). The default optimizer is Adam (default: 1e-3).')
 
     # CL
@@ -150,7 +150,6 @@ def parse_args():
         args.prob_statio = 0.9
         args.n_runs = 2
 
-    set_trace()
     return args
 
 if __name__ == "__main__":

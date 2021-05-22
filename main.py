@@ -48,7 +48,6 @@ def main(args):
         return args
 
     args = boilerplate(args)
-    set_trace()
 
     def wandb_wrapper(args, first_time=True):
 

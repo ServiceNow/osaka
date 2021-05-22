@@ -26,7 +26,8 @@
         ├── bgd_lib
             ├── ...         # files for BGD      
     ├── main_haven.py       # main file to reproduce results
-    ├── main.py             # main file    
+    ├── main.py             # main file   
+    ├── sweep.py            # hyper-parameter sweep
     ├── dataloaders.py      # defines the experiment setting, constructs the dataloaders    
     ├── args.py             # arguments
     ├── template.py         # main file template (if you dont want to use pytorch)
