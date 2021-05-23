@@ -3,8 +3,8 @@
 
 
 ## (key) Requirements 
-- Python 3.6
-- Pytorch 1.2 (there is a small bug with newer versions)
+- Python 3.6 or 3.7 (past 3.8 you can't get the proper torch version)
+- Pytorch 1.2 (proper torch version for our torchmeta)
 - Havenai 0.6 or higher (to reproduce the official results)
 
 
