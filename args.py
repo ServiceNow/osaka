@@ -63,7 +63,7 @@ def parse_args():
 
     # Model
     group = parser.add_argument_group("Model Settings")
-    group.add_argument('--model_name', type=str, default='ours', choices=['ours', 'online_sgd', 'fine_tuning', 'MetaCOG', 'MetaBGD', 'MAML', 'ANIL', 'BGD'])
+    group.add_argument('--model_name', type=str, default='sparseMAML', choices=['ours', 'sparseMAML', 'online_sgd', 'fine_tuning', 'MetaCOG', 'MetaBGD', 'MAML', 'ANIL', 'BGD'])
     group.add_argument('--model_name_impv', type=str, default=None, help='for monitoring')
     group.add_argument('-hs', '--hidden_size', type=int, default=64, help='Number of channels in each convolution layer of the VGG network or hidden size of an MLP. If None, kept to default')
     group.add_argument('-de', '--deeper', type=int, default=0, help='number of layers after the convs and before the classifier')
@@ -95,6 +95,7 @@ def parse_args():
     group.add_argument('-ss', '--step_size', type=float, default=0.1, help='Size of the fast adaptation step, ie. learning rate in the gradient descent update (default: 0.1).')
     group.add_argument('-lss', '--learn_step_size', type=bool, default=False, help='Weither or not to learn the (inner loop) step-size')
     group.add_argument('-ppss', '--per_param_step_size', type=bool, default=False, help='Weither ot not to learn param specific step-size')
+    group.add_argument('-ssa', '--step_size_activation', type=str, default=None, choices=[None, 'binary_trough', 'relu_trough'], help='to activate sparseMAML')
     group.add_argument('--first_order', type=bool, default=False, help='Use the first order approximation, do not use higher-order derivatives during meta-optimization.')
     group.add_argument('--meta_lr', type=float, default=0.001, help='Learning rate for the meta-optimizer (optimization of the outer loss). The default optimizer is Adam (default: 1e-3).')
 

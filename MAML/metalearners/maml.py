@@ -91,6 +91,7 @@ class ModelAgnosticMetaLearning(object):
         self.best_pretrain_val = None
         self.last_tbd = 0
         self.cl_buffer = []
+        self.step_size_activation = args.step_size_activation
         # self.cl_buffer['inputs'], self.cl_buffer['targets'] = [], []
 
         if args.per_param_step_size:
@@ -182,7 +183,8 @@ class ModelAgnosticMetaLearning(object):
                 step_size=self.step_size, params=params,
                 first_order=(not self.model.training) or self.first_order,
                 freeze_visual_features=self.freeze_visual_features,
-                no_meta_learning=self.no_meta_learning)
+                no_meta_learning=self.no_meta_learning,
+                step_size_activation=self.step_size_activation)
 
         return params, results
     
@@ -210,7 +212,8 @@ class ModelAgnosticMetaLearning(object):
                 step_size=self.step_size, params=params,
                 first_order=(not self.model.training) or self.first_order,
                 freeze_visual_features=self.freeze_visual_features,
-                no_meta_learning=self.no_meta_learning)
+                no_meta_learning=self.no_meta_learning,
+                step_size_activation=self.step_size_activation)
 
         return params, results
 
@@ -791,7 +794,8 @@ class ModularMAML(ModelAgnosticMetaLearning):
                 step_size=self.step_size, params=masks_logits,
                 first_order=(not self.model.training) or self.first_order,
                 freeze_visual_features = self.freeze_visual_features,
-                no_meta_learning=self.no_meta_learning)
+                no_meta_learning=self.no_meta_learning,
+                step_size_activation=self.step_size_activation)
 
         self.current_mask_stats = masks_logits
         # final masking

@@ -4,10 +4,12 @@ from os import system
 '''
 Hyperparameter sweep
 See table 7 of the paper https://arxiv.org/pdf/2003.05856.pdf
+Using EAI's toolkit
 '''
 
+TOOLKIT=False #for using EAI's Toolkit or not 
 N_TRIALS = 1
-WANDB = 'osaka_hps1'
+WANDB = 'osaka_omniglot_sparseMAML'
 
 #-------
 #setting
@@ -16,7 +18,8 @@ PROB_STATIO = [0.9, 0.98]
 
 #-------
 # method
-MODEL_NAME = ['ANIL', 'BGD', 'fine_tuning', 'MAML', 'MetaBGD', 'MetaCOG', 'online_sgd', 'ours']
+# MODEL_NAME = ['ANIL', 'BGD', 'fine_tuning', 'MAML', 'MetaBGD', 'MetaCOG', 'online_sgd', 'ours', 'sparseMAML']
+MODEL_NAME = ['sparseMAML']
 
 LEARN_STEP_SIZE = [True, False]
 #NOTE: we will automatically set per_parameter_step_size = learn_step_size
@@ -49,6 +52,8 @@ PATIENCE = [5, 10, 20]
 MASKS_INIT = [0.1, 0.2, 0.3, 0.4, 0.5]
 L1_REG = [0, 0.1, 1, 10]
 
+# sparseMAML
+STEP_SIZE_ACTIVATION = ['binary_trough', 'relu_trough']
 
 #------
 # sweep
@@ -73,6 +78,7 @@ for _ in range(N_TRIALS):
     patience = np.random.choice(PATIENCE)
     masks_init = np.random.choice(MASKS_INIT)
     l1_reg = np.random.choice(L1_REG)
+    step_size_activation = np.random.choice(STEP_SIZE_ACTIVATION)
     
     #-----------
     # launch job
@@ -93,9 +99,13 @@ for _ in range(N_TRIALS):
               f'--num_epochs {num_epochs} ' \
               f'--patience {patience} ' \
               f'--masks_init {masks_init} ' \
-              f'--l1_reg {l1_reg} ' 
+              f'--l1_reg {l1_reg} ' \
+              f'--step_size_activation {step_size_activation} ' 
 
-    print(command)              
-    system(command)
-    
+
+    print(command)
+    if TOOLKIT:             
+        system(f'bash toolkit_job.sh {command} "$@" ')
+    else:
+        system(command)
 

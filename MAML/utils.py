@@ -6,8 +6,32 @@ import random
 from collections import OrderedDict
 from torchmeta.modules import MetaModule
 
+class BinaryLayer(torch.autograd.Function):
+    def __init__(self):
+        super(BinaryLayer, self).__init__()
+    @staticmethod
+    def forward(self, input):
+        self.save_for_backward(input)
+        return torch.sign(input)
+    @staticmethod
+    def backward(self, grad_output):
+        #input = self.saved_tensors[0]
+        #grad_output[input>1]=0
+        #grad_output[input<-1]=0
+        return grad_output
+
+class ReluTroughLayer(torch.autograd.Function):
+    def __init__(self):
+        super(ReluTroughLayer, self).__init__()
+    @staticmethod
+    def forward(self, input):
+        return torch.relu(input)
+    @staticmethod
+    def backward(self, grad_output):
+        return grad_output
+
 def update_parameters(model, loss, params=None, step_size=0.5, first_order=False,
-            freeze_visual_features=False, no_meta_learning=False):
+            freeze_visual_features=False, no_meta_learning=False, step_size_activation=None):
     """Update of the meta-parameters with one step of gradient descent on the
     loss function.
 
@@ -44,11 +68,17 @@ def update_parameters(model, loss, params=None, step_size=0.5, first_order=False
     out = OrderedDict()
 
     if isinstance(step_size, (dict, OrderedDict)):
+        #NOTE: this is for meta-SGD loop
         for (name, param), grad in zip(params.items(), grads):
             if (freeze_visual_features and 'visual_features' in name) or no_meta_learning:
                 out[name] = param
             else:
-                out[name] = param - step_size[name] * grad
+                if step_size_activation is None:
+                    out[name] = param - step_size[name] * grad
+                elif step_size_activation == 'binary_trough':
+                    out[name] = param - 0.5*(BinaryLayer.apply(step_size[name])+1) * grad
+                elif step_size_activation == 'relu_trough':
+                    out[name] = param - ReluTroughLayer.apply(step_size[name]) * grad
     else:
         for (name, param), grad in zip(params.items(), grads):
             if (freeze_visual_features and 'visual_features' in name) or no_meta_learning:
