@@ -8,8 +8,8 @@ The master branch is lagging behind a bit. I'll fast-forward it + clean it up in
 
 
 ## (key) Requirements 
-- Python 3.6
-- Pytorch 1.2 or higher
+- Python 3.6 or 3.7 (past 3.8 you can't get the proper torch version)
+- Pytorch 1.2 (proper torch version for our torchmeta)
 
 `pip install -r requirements.txt`
 
