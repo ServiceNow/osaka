@@ -1,5 +1,5 @@
-!!python/object:argparse.Namespace
 bdg_optimizer: 0
 method: MAML
 model_name: ours
 cl_strategy: loss
+step_size_activation: None

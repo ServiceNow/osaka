@@ -7,9 +7,10 @@ See table 7 of the paper https://arxiv.org/pdf/2003.05856.pdf
 Using EAI's toolkit
 '''
 
-TOOLKIT=False #for using EAI's Toolkit or not 
-N_TRIALS = 1
+TOOLKIT=True #for using EAI's Toolkit or not 
+N_TRIALS = 300
 WANDB = 'osaka_omniglot_sparseMAML'
+WANDB_KEY = '9f084a9bf4cb3d531e38838a19bd8480216da061'
 
 #-------
 #setting
@@ -19,9 +20,10 @@ PROB_STATIO = [0.9, 0.98]
 #-------
 # method
 # MODEL_NAME = ['ANIL', 'BGD', 'fine_tuning', 'MAML', 'MetaBGD', 'MetaCOG', 'online_sgd', 'ours', 'sparseMAML']
-MODEL_NAME = ['sparseMAML']
+MODEL_NAME = ['sparseMAML', 'ours', 'MAML']
 
-LEARN_STEP_SIZE = [True, False]
+# LEARN_STEP_SIZE = [True, False]
+LEARN_STEP_SIZE = [True]
 #NOTE: we will automatically set per_parameter_step_size = learn_step_size
 
 META_LR = [0.0001, 0.0005, 0.005, 0.001, 0.05, 0.01] # $\eta$ 
@@ -45,7 +47,7 @@ CL_ACCUMULATE = [True, False]
 
 # Pretraining (fine-tuning, MAML, ANIL, C-MAML + Pre) 
 # set NUM_EPOCHS to 0 for none, or to a big value for pre-training (there is early stopping) 
-NUM_EPOCHS = [0, 1000]
+NUM_EPOCHS = [0, 0, 1000]
 PATIENCE = [5, 10, 20] 
 
 # metaCOG
@@ -53,7 +55,7 @@ MASKS_INIT = [0.1, 0.2, 0.3, 0.4, 0.5]
 L1_REG = [0, 0.1, 1, 10]
 
 # sparseMAML
-STEP_SIZE_ACTIVATION = ['binary_trough', 'relu_trough']
+STEP_SIZE_ACTIVATION = [None, 'binary_trough', 'relu_trough']
 
 #------
 # sweep
@@ -64,6 +66,8 @@ for _ in range(N_TRIALS):
     prob_statio = np.random.choice(PROB_STATIO)
     
     model_name = np.random.choice(MODEL_NAME)
+    learn_step_size = np.random.choice(LEARN_STEP_SIZE)
+    per_param_step_size = learn_step_size
     meta_lr = np.random.choice(META_LR)
     batch_size = np.random.choice(BATCH_SIZE)
     step_size = np.random.choice(INNER_STEP_SIZE)
@@ -82,11 +86,13 @@ for _ in range(N_TRIALS):
     
     #-----------
     # launch job
-    command = 'python main.py ' \
-              f'--wandb {WANDB} ' \
+    command = f'--wandb {WANDB} ' \
+              f'--wandb_key {WANDB_KEY} ' \
               f'--dataset {dataset} ' \
               f'--prob_statio {prob_statio} ' \
               f'--model_name {model_name} ' \
+              f'--learn_step_size {learn_step_size} ' \
+              f'--per_param_step_size {per_param_step_size} ' \
               f'--meta_lr {meta_lr} ' \
               f'--batch_size {batch_size} ' \
               f'--step_size {step_size} ' \
@@ -105,7 +111,7 @@ for _ in range(N_TRIALS):
 
     print(command)
     if TOOLKIT:             
-        system(f'bash toolkit_job.sh {command} "$@" ')
+        system(f'bash toolkit_job2.sh {command} "$@" ')
     else:
-        system(command)
+        system(f'python main.py {command}')
 

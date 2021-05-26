@@ -335,6 +335,8 @@ def main(args):
     # launch CL jobs
     continual_learning(args, cl_model_init, meta_optimizer_cl, cl_dataloader)
 
+    exit()
+
 
 if __name__ == "__main__":
     from args import parse_args

@@ -429,8 +429,6 @@ class ModelAgnosticMetaLearning(object):
                 if current_acc >= results['accuracy_after'] + self.cl_tbd_thres:
                     tbd = 1
             elif 'loss' in str(self.cl_strategy):
-                # if task_switch:
-                #     temp
                 if current_outer_loss + self.cl_tbd_thres <= results['outer_loss']:
                     tbd = 1
 

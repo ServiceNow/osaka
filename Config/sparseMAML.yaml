@@ -1,7 +1,6 @@
-!!python/object:argparse.Namespace
 bdg_optimizer: 0
 method: MAML
-model_name: ours
+model_name: sparseMAML
 cl_strategy: loss
 learn_step_size: True
 per_param_step_size: True

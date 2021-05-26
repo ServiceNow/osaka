@@ -60,6 +60,7 @@ def parse_args():
     group.add_argument('--num_shots',      type=int, default=5,      help='Number of training example per class (k in "k-shot").')
     group.add_argument('--num_shots-test', type=int, default=15,     help='Number of test example per class. If negative, same as the number of training examples `--num_shots`')
     group.add_argument('--seed',           type=int, default=100,    help='Seed')
+    group.add_argument('--n_runs',         type=int, default=1,      help='number of runs for cl experiment')
 
     # Model
     group = parser.add_argument_group("Model Settings")
@@ -69,14 +70,13 @@ def parse_args():
     group.add_argument('-de', '--deeper', type=int, default=0, help='number of layers after the convs and before the classifier')
     group.add_argument('-nclml', '--no_cl_meta_learning',  type=int,   default=0,     help='turn off meta-learning at cl time')
     group.add_argument('--freeze_visual_features',         type=int,   default=0,     help='for MRCL, freeze all conv layers at cl time')
-    group.add_argument('-cl_s',  '--cl_strategy',          type=str,   default=None,  choices=['always_retrain', 'never_retrain', 'acc', 'loss'])
-    group.add_argument('-cl_a',  '--cl_accumulate',        type=bool,  default=False, help="enables more few shots, with TBD")
+    group.add_argument('-cl_s',  '--cl_strategy',          type=str,   default=None,  choices=['always_retrain', 'never_retrain', 'acc', 'loss', 'loss_smooth'])
+    group.add_argument('-cl_a',  '--cl_accumulate',        type=str2bool,  default=False, help="enables more few shots, with TBD")
     group.add_argument('-cl_st', '--cl_strategy_thres',    type=float, default=0,     help='threshold for training on the incoming data or not')
     group.add_argument('-cl_tt', '--cl_tbd_thres',         type=float, default=-1,    help='threshold for task boundary detection (-1 to turn on off)')
 
     # ModularMAML (for MetaCOG)
     group = parser.add_argument_group("ModularMAML", "Settings related to the Modular MAML model.")
-    group.add_argument('-m', '--method', type=str, default='MAML', choices=['MAML','ModularMAML',])
     group.add_argument('-mo', '--modularity', type=str, default='param_wise', choices=['param_wise'], help='dont mind this for now')
     group.add_argument('-ma','--mask_activation', type=str, default='None', choices=['None','sigmoid','ReLU', 'hardshrink'], help='activation before applying the masks')
     group.add_argument('-lr', '--l1_reg', type=float, default=0.0, help='regularization strenght to encourage sparsity')
@@ -93,16 +93,15 @@ def parse_args():
     group.add_argument('--num_batches', type=int, default=100, help='Number of batch of tasks per epoch (default: 100).')
     group.add_argument('-ns', '--num_steps', type=int, default=1, help='Number of inner updates')
     group.add_argument('-ss', '--step_size', type=float, default=0.1, help='Size of the fast adaptation step, ie. learning rate in the gradient descent update (default: 0.1).')
-    group.add_argument('-lss', '--learn_step_size', type=bool, default=False, help='Weither or not to learn the (inner loop) step-size')
-    group.add_argument('-ppss', '--per_param_step_size', type=bool, default=False, help='Weither ot not to learn param specific step-size')
-    group.add_argument('-ssa', '--step_size_activation', type=str, default=None, choices=[None, 'binary_trough', 'relu_trough'], help='to activate sparseMAML')
+    group.add_argument('-lss', '--learn_step_size', type=str2bool, default=False, help='Weither or not to learn the (inner loop) step-size')
+    group.add_argument('-ppss', '--per_param_step_size', type=str2bool, default=False, help='Weither ot not to learn param specific step-size')
+    group.add_argument('-ssa', '--step_size_activation', type=str, default=None, choices=[None, 'None', 'binary_trough', 'relu_trough'], help='to activate sparseMAML')
     group.add_argument('--first_order', type=bool, default=False, help='Use the first order approximation, do not use higher-order derivatives during meta-optimization.')
     group.add_argument('--meta_lr', type=float, default=0.001, help='Learning rate for the meta-optimizer (optimization of the outer loss). The default optimizer is Adam (default: 1e-3).')
 
     # CL
     group = parser.add_argument_group("CL", "Settings specific to the continual learning setting.")
     group.add_argument('--model_config', type=str, default="Config/ours.yaml", help="Path to a yaml config file.")
-    group.add_argument('--n_runs',     type=int, default=1,     help='number of runs for cl experiment')
     group.add_argument('--timesteps',  type=int, default=10000, help='number of timesteps for the CL exp')
     group.add_argument('--prob_statio', type=float, default=0.98, help='probability to stay in the same task')
     group.add_argument("--task_sequence",    type=str, choices=["train", "test", "ood"], default=None, nargs="*", help="predefined task sequence for the dataloader to serve in a loop.")
@@ -124,6 +123,10 @@ def parse_args():
 
     args = parser.parse_args()
 
+    #TODO: fix this
+    if args.step_size_activation == 'None':
+        args.step_size_activation = None
+
     # args = AttrDict(**args)
     if args.num_shots_test <= 0:
         args.num_shots_test = args.num_shots
@@ -138,7 +141,7 @@ def parse_args():
             file_args = yaml.load(f, Loader=yaml.FullLoader)
         # overwrite the default values with the values from the file.
         args_dict = vars(args)
-        args_dict.update(vars(file_args))
+        args_dict.update(file_args)
         args = argparse.Namespace(**args_dict)
 
     if args.debug:
