@@ -10,7 +10,7 @@ Using EAI's toolkit
 TOOLKIT=True #for using EAI's Toolkit or not 
 N_TRIALS = 300
 WANDB = 'osaka_omniglot_sparseMAML'
-WANDB_KEY = '9f084a9bf4cb3d531e38838a19bd8480216da061'
+WANDB_KEY = '<insert key>'
 
 #-------
 #setting
