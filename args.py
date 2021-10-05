@@ -1,7 +1,7 @@
 """
 Defines the command-line arguments used in main.py.
 """
-
+import os
 import argparse
 from typing import List, Optional, Union
 import yaml
@@ -49,7 +49,7 @@ def parse_args():
     #group.add_argument('--mode', default='train', choices=['train', 'test'])
     datasets = ['sinusoid', 'omniglot', 'miniimagenet', 'tiered-imagenet', "harmonics", "synbols"]
     group.add_argument('--dataset', choices=datasets, default='omniglot', help='Name of the dataset.')  # NOTE: removed "-da" option.
-    group.add_argument('--folder',         type=str, default='Data', help='Path to the folder the data is downloaded to.')
+    group.add_argument('--folder',         type=str, default='~/data/osaka', help='Path to the folder the data is downloaded to.')
     group.add_argument('--wandb',          type=str, default=None,   help='Wandb project name. If None, no wandb logging')
     group.add_argument('--name',           type=str, default=None,   help='Wandb run name. If None, name will be random')
     group.add_argument('--wandb_key',      type=str, default=None,   help='Wandb token key for login. If None, shell login assumed')
@@ -121,6 +121,7 @@ def parse_args():
 
     args = parser.parse_args()
 
+    args.folder = os.path.expanduser(args.folder)
     if args.num_shots_test <= 0:
         args.num_shots_test = args.num_shots
 
@@ -131,7 +132,7 @@ def parse_args():
     # Load a set of pre-configured arguments.
     if args.model_config:
         with open(args.model_config) as f:
-            file_args = yaml.load(f, Loader=yaml.FullLoader)
+            file_args = yaml.load(f, Loader=yaml.Loader)
         # overwrite the default values with the values from the file.
         args_dict = vars(args)
         args_dict.update(vars(file_args))
