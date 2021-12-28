@@ -134,7 +134,7 @@ def parse_args():
             file_args = yaml.load(f, Loader=yaml.FullLoader)
         # overwrite the default values with the values from the file.
         args_dict = vars(args)
-        args_dict.update(vars(file_args))
+        args_dict.update(file_args)
         args = argparse.Namespace(**args_dict)
 
     if args.debug:
