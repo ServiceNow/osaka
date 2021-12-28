@@ -131,6 +131,7 @@ class ModelAgnosticMetaLearning(object):
         # inner loop:
         for task_id, (train_inputs, train_targets, test_inputs, test_targets) \
                 in enumerate(zip(*batch['train'], *batch['test'])):
+
             params, adaptation_results = self.adapt(train_inputs, train_targets)
 
             results['inner_losses'][:, task_id] = adaptation_results['inner_losses']
@@ -375,7 +376,7 @@ class ModelAgnosticMetaLearning(object):
         self.current_model, _ = self.adapt(inputs, targets)
 
         #----------------- CL strategies ------------------#
-        
+
         # Note: this is the C-MAML algo w/o the prolonged adaptation phase (PAP)
         # and with the discrete version of the update modulation (UM)
         # The full C-MAML algo is in the camera_ready branch at:
@@ -411,19 +412,23 @@ class ModelAgnosticMetaLearning(object):
         if self.cl_strategy != 'never_retrain' and not tbd and ood:
             self.outer_update(outer_loss)
 
+            # ADDED THIS LINE TO UPDATE FAST MODEL
+            self.current_model, _ = self.adapt(inputs, targets)
+
 
         #--------------------------------------------------#
 
         results['tbd'] = task_switch.item()==tbd
 
-        #print('{} {} loss={:.2f} curr_loss={:.2f} acc={:.2f} curr_acc={:.2f} tbd: {}'.format(
-        #                                   task_switch.item(),
-        #                                   mode[0],
-        #                                   results['outer_loss'],
-        #                                   current_outer_loss,
-        #                                   results['accuracy_after'],
-        #                                   current_acc,
-        #                                   results['tbd']))
+        '''
+        print('{} {} loss={:.2f}acc={:.2f} curr_acc={:.2f} tbd: {}'.format(
+                                           task_switch.item(),
+                                           mode[0],
+                                           results['outer_loss'],
+                                           results['accuracy_after'],
+                                           current_acc,
+                                           results['tbd']))
+        '''
 
         return results
 
@@ -558,7 +563,7 @@ class ModularMAML(ModelAgnosticMetaLearning):
             return params_masked, masks_logits
 
     def adapt(self, inputs, targets):
-
+        print('adapting')
         results = {'inner_losses': np.zeros(
             (self.num_adaptation_steps,), dtype=np.float32)}
 

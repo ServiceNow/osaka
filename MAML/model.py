@@ -4,7 +4,6 @@ from pdb import set_trace
 from collections import OrderedDict
 from torchmeta.modules import (MetaModule, MetaConv2d, MetaBatchNorm2d,
                                MetaSequential, MetaLinear)
-from torchmeta.modules.utils import get_subdict
 
 def conv_block(in_channels, out_channels, **kwargs):
     return MetaSequential(OrderedDict([
@@ -74,11 +73,11 @@ class MetaConvModel(MetaModule):
         self.classifier = MetaLinear(feature_size, out_features, bias=True)
 
     def forward(self, inputs, params=None):
-        visual_features = self.visual_features(inputs, params=get_subdict(params, 'visual_features'))
+        visual_features = self.visual_features(inputs, params=self.get_subdict(params, 'visual_features'))
         features = visual_features.view((visual_features.size(0), -1))
         if self.deeper:
-            features = self.features(features, params=get_subdict(params, 'features'))
-        logits = self.classifier(features, params=get_subdict(params, 'classifier'))
+            features = self.features(features, params=self.get_subdict(params, 'features'))
+        logits = self.classifier(features, params=self.get_subdict(params, 'classifier'))
         return logits
 
 class MetaMLPModel(MetaModule):
@@ -117,9 +116,9 @@ class MetaMLPModel(MetaModule):
         self.classifier = MetaLinear(hidden_sizes[-1], out_features, bias=True)
 
     def forward(self, inputs, params=None):
-        features = self.features(inputs, params=get_subdict(params, 'features'))
+        features = self.features(inputs, params=self.get_subdict(params, 'features'))
         #set_trace()
-        logits = self.classifier(features, params=get_subdict(params, 'classifier'))
+        logits = self.classifier(features, params=self.get_subdict(params, 'classifier'))
         return logits
 
 def ModelConvOmniglot(out_features, hidden_size=64, deeper=0):
