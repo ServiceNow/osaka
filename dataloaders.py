@@ -2,7 +2,7 @@ import sys
 import torch
 import numpy as np
 from pdb import set_trace
-
+import os
 
 # --------------------------------------------------------------------------
 # utils
@@ -30,23 +30,13 @@ def order_and_split(data_x, data_y):
     """ given a dataset, returns (num_classes, samples_per_class, *data_x[0].size())
         tensor where samples (and labels) are ordered and split per class """
 
-    # sort according to the label
-    out_train = [
-        (x,y) for (x,y) in sorted(zip(data_x, data_y), key=lambda v : v[1]) ]
+    xx, yy = [], []
+    for label in data_y.unique():
+        idx = torch.where(data_y == label)[0]
+        xx += [data_x[idx]]
+        yy += [data_y[idx]]
 
-    # stack in increasing label order
-    data_x, data_y = [
-            torch.stack([elem[i] for elem in out_train]) for i in [0,1] ]
-
-    # find first indices of every class
-    n_classes = data_y.unique().size(0)
-    idx       = [((data_y + i) % n_classes).argmax() for i in range(n_classes)]
-    idx       = [0] + [x + 1 for x in sorted(idx)]
-
-    # split into different classes
-    to_chunk = [a - b for (a,b) in zip(idx[1:], idx[:-1])]
-    data_x   = data_x.split(to_chunk)
-    data_y   = data_y.split(to_chunk)
+    data_x, data_y = xx, yy
 
     # give equal amt of points for every class
     #TODO(if this is restrictive for some dataset, we can change)

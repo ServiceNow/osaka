@@ -1,4 +1,3 @@
-!!python/object:argparse.Namespace
 bgd_optimizer: 1
 cl_strategy: always_retrain
 cl_tbd_thres: -1
